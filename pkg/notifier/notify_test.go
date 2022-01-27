@@ -1,7 +1,7 @@
 package notifier
 
 import (
-	"sync"
+	"context"
 	"testing"
 )
 
@@ -14,7 +14,8 @@ func Test_Notify(t *testing.T) {
 		"Test message 5",
 	}
 	messagesWentThrough := 0
-	errChannel := make(chan error, len(messages))
+	errChannel := make(chan error)
+	doneChannel := make(chan bool)
 
 	notifier := Notifier{
 		Url:        "http://localhost/:8080",
@@ -24,9 +25,6 @@ func Test_Notify(t *testing.T) {
 		Interval:   1,
 	}
 
-	wg := sync.WaitGroup{}
-	wg.Add(1)
-
 	go func(errChannel chan error, messagesWentThrough *int) {
 		for *messagesWentThrough < len(messages) {
 			<-errChannel
@@ -34,12 +32,12 @@ func Test_Notify(t *testing.T) {
 			*messagesWentThrough++
 		}
 
-		wg.Done()
+		doneChannel <- true
 	}(errChannel, &messagesWentThrough)
 
-	notifier.Notify()
+	notifier.Notify(context.Background())
 
-	wg.Wait()
+	<-doneChannel
 
 	if messagesWentThrough != len(messages) {
 		t.Fail()

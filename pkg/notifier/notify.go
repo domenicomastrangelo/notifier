@@ -1,6 +1,7 @@
 package notifier
 
 import (
+	"context"
 	"net/http"
 	"net/url"
 	"strings"
@@ -15,10 +16,14 @@ type Notifier struct {
 	Interval   int
 }
 
-func (n *Notifier) Notify() {
+func (n *Notifier) Notify(ctx context.Context) {
 	n.checkTimeout()
 
 	for _, message := range n.Messages {
+		if ctx.Err() == context.Canceled {
+			return
+		}
+
 		go n.sendMessage(message)
 		time.Sleep(time.Duration(n.Interval) * time.Second)
 	}

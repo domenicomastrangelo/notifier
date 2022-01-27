@@ -21,6 +21,14 @@ const MIN_TIMEOUT = 5
 const MIN_INTERVAL = 5
 
 func (n *Notifier) Notify(ctx context.Context) {
+	err := n.checkUrl()
+
+	if err != nil {
+		n.ErrChannel <- err
+		close(n.ErrChannel)
+		return
+	}
+
 	n.checkTimeout()
 	n.checkInterval()
 
@@ -56,20 +64,11 @@ func (n *Notifier) checkInterval() {
 }
 
 func (n *Notifier) sendMessage(message string, wg *sync.WaitGroup) {
-	var err error
-
-	err = n.checkUrl()
-
-	if err != nil {
-		n.ErrChannel <- err
-		return
-	}
-
 	httpClient := http.Client{
 		Timeout: time.Duration(n.Timeout) * time.Second,
 	}
 
-	_, err = httpClient.Post(n.Url, "text/plain", strings.NewReader(message))
+	_, err := httpClient.Post(n.Url, "text/plain", strings.NewReader(message))
 
 	n.ErrChannel <- err
 	wg.Done()

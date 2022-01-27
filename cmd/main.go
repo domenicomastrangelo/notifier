@@ -14,15 +14,14 @@ import (
 
 func main() {
 	ctx, ctxDone := context.WithCancel(context.Background())
-	errChannel := make(chan error)
 	doneChannel := make(chan bool)
-	defer close(errChannel)
 	defer close(doneChannel)
 
 	captureSIGINT(&ctxDone, doneChannel)
 	interval, url := parseFlags()
 
 	messages := scanForMessages()
+	errChannel := make(chan error, len(messages))
 
 	notifier := notifier.Notifier{
 		Url:        url,
@@ -33,11 +32,10 @@ func main() {
 	}
 
 	go func(errChannel chan error, doneChannel chan bool) {
-		messagesWentThrough := 0
-
-		for messagesWentThrough < len(messages) {
-			<-errChannel
-			messagesWentThrough++
+		for err := range errChannel {
+			if err != nil {
+				fmt.Println(err.Error())
+			}
 		}
 
 		doneChannel <- true

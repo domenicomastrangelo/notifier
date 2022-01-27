@@ -12,6 +12,7 @@ type Notifier struct {
 	Messages   []string
 	ErrChannel chan error
 	Timeout    int
+	Interval   int
 }
 
 func (n *Notifier) Notify() {
@@ -19,6 +20,7 @@ func (n *Notifier) Notify() {
 
 	for _, message := range n.Messages {
 		go n.sendMessage(message)
+		time.Sleep(time.Duration(n.Interval) * time.Second)
 	}
 }
 

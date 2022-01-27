@@ -21,6 +21,7 @@ func Test_Notify(t *testing.T) {
 		Messages:   messages,
 		ErrChannel: errChannel,
 		Timeout:    5,
+		Interval:   1,
 	}
 
 	wg := sync.WaitGroup{}

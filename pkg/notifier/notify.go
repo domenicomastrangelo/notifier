@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -23,17 +24,23 @@ func (n *Notifier) Notify(ctx context.Context) {
 	n.checkTimeout()
 	n.checkInterval()
 
+	wg := sync.WaitGroup{}
+
 	for i, message := range n.Messages {
 		if ctx.Err() == context.Canceled {
 			return
 		}
 
-		go n.sendMessage(message)
+		wg.Add(1)
+		go n.sendMessage(message, &wg)
 
 		if i%50 == 0 {
 			time.Sleep(time.Duration(n.Interval) * time.Second)
 		}
 	}
+
+	wg.Wait()
+	close(n.ErrChannel)
 }
 
 func (n *Notifier) checkTimeout() {
@@ -48,7 +55,7 @@ func (n *Notifier) checkInterval() {
 	}
 }
 
-func (n *Notifier) sendMessage(message string) {
+func (n *Notifier) sendMessage(message string, wg *sync.WaitGroup) {
 	var err error
 
 	err = n.checkUrl()
@@ -64,20 +71,12 @@ func (n *Notifier) sendMessage(message string) {
 
 	_, err = httpClient.Post(n.Url, "text/plain", strings.NewReader(message))
 
-	if err != nil {
-		n.ErrChannel <- err
-		return
-	}
-
-	n.ErrChannel <- nil
+	n.ErrChannel <- err
+	wg.Done()
 }
 
 func (n *Notifier) checkUrl() error {
 	_, err := url.ParseRequestURI(n.Url)
 
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return err
 }

@@ -16,6 +16,7 @@ func main() {
 	ctx, ctxDone := context.WithCancel(context.Background())
 	errChannel := make(chan error)
 	doneChannel := make(chan bool)
+	defer close(errChannel)
 	defer close(doneChannel)
 
 	captureSIGINT(&ctxDone, doneChannel)

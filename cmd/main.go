@@ -31,15 +31,7 @@ func main() {
 		Interval:   interval,
 	}
 
-	go func(errChannel chan error, doneChannel chan bool) {
-		for err := range errChannel {
-			if err != nil {
-				fmt.Println(err.Error())
-			}
-		}
-
-		doneChannel <- true
-	}(errChannel, doneChannel)
+	go readErrChannel(errChannel, doneChannel)
 
 	notifier.Notify(ctx)
 
@@ -83,4 +75,14 @@ func captureSIGINT(ctxDone *context.CancelFunc, doneChannel chan bool) {
 		fmt.Println("Exiting gracefully")
 		doneChannel <- true
 	}()
+}
+
+func readErrChannel(errChannel chan error, doneChannel chan bool) {
+	for err := range errChannel {
+		if err != nil {
+			fmt.Println(err.Error())
+		}
+	}
+
+	doneChannel <- true
 }

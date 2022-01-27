@@ -50,7 +50,7 @@ func main() {
 
 func parseFlags() (int, string) {
 	url := flag.String("url", "", "--url=URL")
-	interval := flag.Int("interval", 5, "--interval=5")
+	interval := flag.Int("interval", 5, "--interval=5 (seconds)")
 
 	flag.Parse()
 

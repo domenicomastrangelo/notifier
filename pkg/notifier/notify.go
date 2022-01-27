@@ -34,7 +34,7 @@ func (n *Notifier) Notify(ctx context.Context) {
 		wg.Add(1)
 		go n.sendMessage(message, &wg)
 
-		if i%50 == 0 {
+		if i%50 == 0 && i > 0 {
 			time.Sleep(time.Duration(n.Interval) * time.Second)
 		}
 	}

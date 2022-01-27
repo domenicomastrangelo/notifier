@@ -14,8 +14,9 @@ func Test_Notify(t *testing.T) {
 		"Test message 5",
 	}
 	messagesWentThrough := 0
-	errChannel := make(chan error)
+	errChannel := make(chan error, len(messages))
 	doneChannel := make(chan bool)
+	defer close(doneChannel)
 
 	notifier := Notifier{
 		Url:        "http://localhost/:8080",
@@ -26,9 +27,7 @@ func Test_Notify(t *testing.T) {
 	}
 
 	go func(errChannel chan error, messagesWentThrough *int) {
-		for *messagesWentThrough < len(messages) {
-			<-errChannel
-
+		for range errChannel {
 			*messagesWentThrough++
 		}
 

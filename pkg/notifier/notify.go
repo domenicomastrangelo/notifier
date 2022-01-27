@@ -16,22 +16,35 @@ type Notifier struct {
 	Interval   int
 }
 
+const MIN_TIMEOUT = 5
+const MIN_INTERVAL = 5
+
 func (n *Notifier) Notify(ctx context.Context) {
 	n.checkTimeout()
+	n.checkInterval()
 
-	for _, message := range n.Messages {
+	for i, message := range n.Messages {
 		if ctx.Err() == context.Canceled {
 			return
 		}
 
 		go n.sendMessage(message)
-		time.Sleep(time.Duration(n.Interval) * time.Second)
+
+		if i%50 == 0 {
+			time.Sleep(time.Duration(n.Interval) * time.Second)
+		}
 	}
 }
 
 func (n *Notifier) checkTimeout() {
-	if n.Timeout < 5 {
-		n.Timeout = 5
+	if n.Timeout < MIN_TIMEOUT {
+		n.Timeout = MIN_TIMEOUT
+	}
+}
+
+func (n *Notifier) checkInterval() {
+	if n.Interval < MIN_INTERVAL {
+		n.Interval = MIN_INTERVAL
 	}
 }
 
@@ -53,6 +66,7 @@ func (n *Notifier) sendMessage(message string) {
 
 	if err != nil {
 		n.ErrChannel <- err
+		return
 	}
 
 	n.ErrChannel <- nil
